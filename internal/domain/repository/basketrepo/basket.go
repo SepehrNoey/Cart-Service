@@ -21,6 +21,6 @@ type GetCommand struct {
 type Repository interface {
 	Create(ctx context.Context, basket model.Basket) error
 	Get(ctx context.Context, cmd GetCommand) []model.Basket
-	Update(ctx context.Context, cmd GetCommand, basket model.Basket) error
+	Update(ctx context.Context, basket model.Basket) error
 	Delete(ctx context.Context, cmd GetCommand) error
 }

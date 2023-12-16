@@ -88,6 +88,11 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
 	}
+
+	if len(baskets) > 1 {
+		return echo.ErrInternalServerError
+	}
+
 	// we have found the basket to update
 	basket := baskets[0]
 
@@ -96,7 +101,7 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrBadRequest // maybe return validation error
 	}
 
-	if err = bh.repo.Update(c.Request().Context(), basketrepo.GetCommand{ID: &id}, model.Basket{
+	if err = bh.repo.Update(c.Request().Context(), model.Basket{
 		ID:        basket.ID,
 		CreatedAt: basket.CreatedAt,
 		UpdatedAt: time.Now(),
