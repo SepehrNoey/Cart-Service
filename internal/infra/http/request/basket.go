@@ -21,7 +21,7 @@ func (bc BasketCreate) CreateValidate() error {
 
 type BasketUpdate struct {
 	Data  string `json:"data,omitempty" valid:"length(0|2048),optional"`
-	State string `josn:"state,omitempty" valid:"(COMPLETED|PENDING),optional"`
+	State string `josn:"state,omitempty" valid:"in(COMPLETED|PENDING),optional"`
 }
 
 func (bu BasketUpdate) UpdateValidate() error {

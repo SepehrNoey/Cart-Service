@@ -79,12 +79,18 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	var req request.BasketUpdate
+	var req request.BasketUpdate // i have to consider this!! the data and state
 	if err = c.Bind(&req); err != nil {
 		return echo.ErrBadRequest
 	}
 
-	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
+		ID:        &id,
+		CreatedAt: nil,
+		UpdatedAt: nil,
+		Data:      nil,
+		State:     nil,
+	})
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
 	}
@@ -101,18 +107,30 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrBadRequest // maybe return validation error
 	}
 
+	var toBeUpdatedData string
+	if req.Data == "" {
+		toBeUpdatedData = basket.Data
+	} else {
+		toBeUpdatedData = req.Data
+	}
+
+	var toBeUpdatedState string
+	if req.State == "" {
+		toBeUpdatedState = basket.State
+	} else if req.State == Completed && basket.State == Pending {
+		toBeUpdatedState = req.State
+	} else {
+		toBeUpdatedState = basket.State
+	}
+
 	if err = bh.repo.Update(c.Request().Context(), model.Basket{
 		ID:        basket.ID,
 		CreatedAt: basket.CreatedAt,
 		UpdatedAt: time.Now(),
-		Data:      req.Data,
-		State:     req.State,
+		Data:      toBeUpdatedData,
+		State:     toBeUpdatedState,
 	}); err != nil {
 		return echo.ErrInternalServerError
-	}
-
-	if req.State == Completed {
-		// TODO
 	}
 
 	baskets = bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &basket.ID})
