@@ -15,7 +15,7 @@ import (
 
 const (
 	Pending   string = "PENDING"
-	Completed        = "COMPLETED"
+	Completed string = "COMPLETED"
 )
 
 type BasketHandler struct {
@@ -96,13 +96,15 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrBadRequest // maybe return validation error
 	}
 
-	err = bh.repo.Update(c.Request().Context(), basketrepo.GetCommand{ID: &id}, model.Basket{
+	if err = bh.repo.Update(c.Request().Context(), basketrepo.GetCommand{ID: &id}, model.Basket{
 		ID:        basket.ID,
 		CreatedAt: basket.CreatedAt,
 		UpdatedAt: time.Now(),
 		Data:      req.Data,
 		State:     req.State,
-	})
+	}); err != nil {
+		return echo.ErrInternalServerError
+	}
 
 	if req.State == Completed {
 		// TODO
