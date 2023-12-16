@@ -108,8 +108,53 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		// TODO
 	}
 
-	// maybe change here to return the whole basket
-	return c.JSON(http.StatusOK, id)
+	return c.JSON(http.StatusOK, basket)
+}
+
+func (bh *BasketHandler) GetByID(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	if len(baskets) == 0 {
+		return echo.ErrNotFound
+	}
+
+	if len(baskets) > 1 {
+		// must be fixed if happended
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, baskets[0])
+
+}
+
+func (bh *BasketHandler) Delete(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	if len(baskets) == 0 {
+		return echo.ErrNotFound
+	}
+
+	if len(baskets) > 1 {
+		// must be fixed if happened
+		return echo.ErrInternalServerError
+	}
+
+	if err = bh.repo.Delete(c.Request().Context(), basketrepo.GetCommand{ID: &id}); err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	// get all baskets again
+	baskets = bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{})
+	return c.JSON(http.StatusOK, baskets)
+
 }
 
 func (bh *BasketHandler) Register(g *echo.Group) {
