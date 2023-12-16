@@ -61,7 +61,7 @@ func (bh *BasketHandler) Create(c echo.Context) error {
 		ID:        id,
 		CreatedAt: now,
 		UpdatedAt: now,
-		Data:      req.Data,
+		Data:      []byte(req.Data),
 		State:     Pending,
 	}); err != nil {
 		if errors.Is(err, basketrepo.ErrBasketIDDuplicate) {
@@ -100,7 +100,7 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		ID:        basket.ID,
 		CreatedAt: basket.CreatedAt,
 		UpdatedAt: time.Now(),
-		Data:      req.Data,
+		Data:      []byte(req.Data),
 		State:     req.State,
 	}); err != nil {
 		return echo.ErrInternalServerError
