@@ -61,7 +61,7 @@ func (bh *BasketHandler) Create(c echo.Context) error {
 		ID:        id,
 		CreatedAt: now,
 		UpdatedAt: now,
-		Data:      []byte(req.Data),
+		Data:      req.Data,
 		State:     Pending,
 	}); err != nil {
 		if errors.Is(err, basketrepo.ErrBasketIDDuplicate) {
@@ -105,7 +105,7 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		ID:        basket.ID,
 		CreatedAt: basket.CreatedAt,
 		UpdatedAt: time.Now(),
-		Data:      []byte(req.Data),
+		Data:      req.Data,
 		State:     req.State,
 	}); err != nil {
 		return echo.ErrInternalServerError
@@ -115,6 +115,8 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		// TODO
 	}
 
+	baskets = bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &basket.ID})
+	basket = baskets[0]
 	return c.JSON(http.StatusOK, basket)
 }
 
