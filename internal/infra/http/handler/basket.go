@@ -29,7 +29,7 @@ func NewBasketHandler(repo basketrepo.Repository) *BasketHandler {
 }
 
 func (bh *BasketHandler) Get(c echo.Context) error {
-	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
 		ID:        nil,
 		CreatedAt: nil,
 		UpdatedAt: nil,
@@ -41,7 +41,10 @@ func (bh *BasketHandler) Get(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	return c.JSON(http.StatusOK, baskets)
+	resultMap := make(map[string]interface{})
+	resultMap["baskets"] = baskets
+	resultMap["jsonbs"] = jsonbs
+	return c.JSONPretty(http.StatusOK, resultMap, "  ")
 }
 
 func (bh *BasketHandler) Create(c echo.Context) error {
@@ -70,7 +73,7 @@ func (bh *BasketHandler) Create(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	return c.JSON(http.StatusCreated, id)
+	return c.JSONPretty(http.StatusCreated, id, "  ")
 }
 
 func (bh *BasketHandler) Update(c echo.Context) error {
@@ -84,7 +87,7 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
+	baskets, _ := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
 		ID:        &id,
 		CreatedAt: nil,
 		UpdatedAt: nil,
@@ -133,9 +136,13 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	baskets = bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &basket.ID})
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &basket.ID})
 	basket = baskets[0]
-	return c.JSON(http.StatusOK, basket)
+
+	resultMap := make(map[string]interface{})
+	resultMap["updated_basket"] = basket
+	resultMap["jsonb"] = jsonbs[0]
+	return c.JSONPretty(http.StatusOK, resultMap, "  ")
 }
 
 func (bh *BasketHandler) GetByID(c echo.Context) error {
@@ -144,7 +151,7 @@ func (bh *BasketHandler) GetByID(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
 	}
@@ -154,7 +161,11 @@ func (bh *BasketHandler) GetByID(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	return c.JSON(http.StatusOK, baskets[0])
+	resultMap := make(map[string]interface{})
+	resultMap["basket_by_id"] = baskets[0]
+	resultMap["jsonb"] = jsonbs[0]
+
+	return c.JSONPretty(http.StatusOK, resultMap, "  ")
 
 }
 
@@ -164,7 +175,7 @@ func (bh *BasketHandler) Delete(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	baskets := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	baskets, _ := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
 	}
@@ -179,8 +190,11 @@ func (bh *BasketHandler) Delete(c echo.Context) error {
 	}
 
 	// get all baskets again
-	baskets = bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{})
-	return c.JSON(http.StatusOK, baskets)
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{})
+	resultMap := make(map[string]interface{})
+	resultMap["baskets"] = baskets
+	resultMap["jsonbs"] = jsonbs
+	return c.JSONPretty(http.StatusOK, resultMap, "  ")
 
 }
 

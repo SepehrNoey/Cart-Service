@@ -34,6 +34,8 @@ func (r *Repository) Create(ctx context.Context, basket model.Basket) error {
 	return nil
 }
 
+// this function must change to also return JSONB too
+
 func (r *Repository) Get(ctx context.Context, cmd basketrepo.GetCommand) []model.Basket {
 	r.lock.RLock()
 	defer r.lock.RUnlock()

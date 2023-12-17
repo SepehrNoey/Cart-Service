@@ -6,12 +6,14 @@ import (
 
 	"github.com/SepehrNoey/Cart-Service/internal/domain/model"
 	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/basketrepo"
+	"github.com/SepehrNoey/Cart-Service/internal/infra/repository/jsonb"
 	"gorm.io/gorm"
 )
 
 type BasketDTO struct {
 	model.Basket
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	DeletedAt  gorm.DeletedAt `gorm:"index"`
+	Attributes jsonb.JSONB    `gorm:"type:jsonb"`
 }
 
 type Repository struct {
@@ -25,7 +27,8 @@ func New(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) Create(ctx context.Context, basket model.Basket) error {
-	result := r.db.WithContext(ctx).Create(&BasketDTO{Basket: basket})
+	dto := BasketDTO{Basket: basket, Attributes: jsonb.BasketToJSON(basket)}
+	result := r.db.WithContext(ctx).Create(&dto)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
 			return basketrepo.ErrBasketIDDuplicate
@@ -37,7 +40,7 @@ func (r *Repository) Create(ctx context.Context, basket model.Basket) error {
 	return nil
 }
 
-func (r *Repository) Get(_ context.Context, cmd basketrepo.GetCommand) []model.Basket {
+func (r *Repository) Get(_ context.Context, cmd basketrepo.GetCommand) ([]model.Basket, []jsonb.JSONB) {
 	var basketDTOs []BasketDTO
 
 	var dto BasketDTO
@@ -62,26 +65,29 @@ func (r *Repository) Get(_ context.Context, cmd basketrepo.GetCommand) []model.B
 
 	if len(conditions) == 0 {
 		if err := r.db.Find(&basketDTOs); err.Error != nil {
-			return nil
+			return nil, nil
 		}
 	} else {
 		if err := r.db.Where(&dto, conditions).Find(&basketDTOs); err.Error != nil {
 			// we may need to change here
-			return nil
+			return nil, nil
 		}
 	}
 
 	baskets := make([]model.Basket, len(basketDTOs))
+	jsonbs := make([]jsonb.JSONB, len(basketDTOs))
 	for i, dto := range basketDTOs {
 		baskets[i] = dto.Basket
+		jsonbs[i] = jsonb.BasketToJSON(baskets[i])
 	}
 
-	return baskets
+	return baskets, jsonbs
 
 }
 
 func (r *Repository) Update(ctx context.Context, basket model.Basket) error {
-	result := r.db.WithContext(ctx).Save(&BasketDTO{Basket: basket})
+	dto := BasketDTO{Basket: basket, Attributes: jsonb.BasketToJSON(basket)}
+	result := r.db.WithContext(ctx).Save(&dto)
 	if result.Error != nil {
 		return result.Error
 	}
