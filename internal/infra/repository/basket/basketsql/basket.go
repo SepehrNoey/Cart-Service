@@ -40,7 +40,7 @@ func (r *Repository) Create(ctx context.Context, basket model.Basket) error {
 	return nil
 }
 
-func (r *Repository) Get(_ context.Context, cmd basketrepo.GetCommand) ([]model.Basket, []jsonb.JSONB) {
+func (r *Repository) Get(ctx context.Context, cmd basketrepo.GetCommand) ([]model.Basket, []jsonb.JSONB) {
 	var basketDTOs []BasketDTO
 
 	var dto BasketDTO
@@ -62,13 +62,17 @@ func (r *Repository) Get(_ context.Context, cmd basketrepo.GetCommand) ([]model.
 		dto.State = *cmd.State
 		conditions = append(conditions, "State")
 	}
+	if cmd.UserID != nil {
+		dto.UserID = *cmd.UserID
+		conditions = append(conditions, "UserID")
+	}
 
 	if len(conditions) == 0 {
-		if err := r.db.Find(&basketDTOs); err.Error != nil {
+		if err := r.db.WithContext(ctx).Find(&basketDTOs); err.Error != nil {
 			return nil, nil
 		}
 	} else {
-		if err := r.db.Where(&dto, conditions).Find(&basketDTOs); err.Error != nil {
+		if err := r.db.WithContext(ctx).Where(&dto, conditions).Find(&basketDTOs); err.Error != nil {
 			// we may need to change here
 			return nil, nil
 		}

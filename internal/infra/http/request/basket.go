@@ -7,7 +7,8 @@ import (
 )
 
 type BasketCreate struct {
-	Data string `json:"data,omitempty" valid:"length(0|2048),optional"`
+	Data  string `json:"data,omitempty" valid:"length(0|2048),optional"`
+	Token string `json:"token,omitempty"`
 }
 
 func (bc BasketCreate) CreateValidate() error {
@@ -22,6 +23,7 @@ func (bc BasketCreate) CreateValidate() error {
 type BasketUpdate struct {
 	Data  string `json:"data,omitempty" valid:"length(0|2048),optional"`
 	State string `josn:"state,omitempty" valid:"in(COMPLETED|PENDING),optional"`
+	Token string `json:"token,omitempty"`
 }
 
 func (bu BasketUpdate) UpdateValidate() error {
@@ -30,4 +32,8 @@ func (bu BasketUpdate) UpdateValidate() error {
 	}
 
 	return nil
+}
+
+type BasketGet struct {
+	Token string `json:"token,omitempty"`
 }

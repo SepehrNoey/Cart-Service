@@ -5,8 +5,10 @@ import (
 	"log"
 
 	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/basketrepo"
+	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/userrepo"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/http/handler"
-	"github.com/SepehrNoey/Cart-Service/internal/infra/repository/basketsql"
+	"github.com/SepehrNoey/Cart-Service/internal/infra/repository/basket/basketsql"
+	"github.com/SepehrNoey/Cart-Service/internal/infra/repository/user/usersql"
 	"github.com/labstack/echo/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,15 +21,18 @@ func main() {
 		fmt.Printf("error connecting to database: %v", err)
 	}
 
-	if err = db.AutoMigrate(new(basketsql.BasketDTO)); err != nil {
+	if err = db.AutoMigrate(&basketsql.BasketDTO{}, &usersql.UserDTO{}); err != nil {
 		fmt.Printf("failed to automigrate: %v", err)
 	}
 
 	app := echo.New()
-	var repo basketrepo.Repository = basketsql.New(db)
+	var basketRepo basketrepo.Repository = basketsql.New(db)
+	var userRepo userrepo.Repository = usersql.New(db)
 
-	h := handler.NewBasketHandler(repo)
-	h.Register(app.Group("basket/"))
+	bh := handler.NewBasketHandler(basketRepo)
+	bh.Register(app.Group("basket/"))
+	uh := handler.NewUserHandler(userRepo)
+	uh.Register(app.Group("/"))
 
 	if err := app.Start("0.0.0.0:2023"); err != nil {
 		log.Fatalf("server failed to start %v", err)

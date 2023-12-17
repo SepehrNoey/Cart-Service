@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/SepehrNoey/Cart-Service/internal/domain/model"
 	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/basketrepo"
+	"github.com/SepehrNoey/Cart-Service/internal/infra/http/auth"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/http/request"
 	"github.com/labstack/echo/v4"
 )
@@ -29,12 +31,28 @@ func NewBasketHandler(repo basketrepo.Repository) *BasketHandler {
 }
 
 func (bh *BasketHandler) Get(c echo.Context) error {
+	var req request.BasketGet
+
+	if err := c.Bind(&req); err != nil {
+		return echo.ErrBadRequest
+	}
+	claims, err := auth.ValidateToken(req.Token)
+	if err != nil {
+		return err
+	}
+
+	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
+	if err != nil {
+		return echo.ErrInternalServerError
+	}
+
 	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
 		ID:        nil,
 		CreatedAt: nil,
 		UpdatedAt: nil,
 		State:     nil,
 		Data:      nil,
+		UserID:    &userID,
 	})
 
 	if len(baskets) == 0 {
@@ -53,27 +71,40 @@ func (bh *BasketHandler) Create(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.ErrBadRequest
 	}
+
+	claims, err := auth.ValidateToken(req.Token)
+	if err != nil {
+		return err
+	}
 	if err := req.CreateValidate(); err != nil {
 		return echo.ErrBadRequest // maybe return validation error
 	}
 
+	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
+	if err != nil {
+		fmt.Println("in create here!")
+		return echo.ErrInternalServerError
+	}
+
 	// now, we create a new basket
-	id := rand.Uint64() % 1_000_000
+	basketID := rand.Uint64() % 1_000_000
 	now := time.Now()
 	if err := bh.repo.Create(c.Request().Context(), model.Basket{
-		ID:        id,
+		ID:        basketID,
 		CreatedAt: now,
 		UpdatedAt: now,
 		Data:      req.Data,
 		State:     Pending,
+		UserID:    userID,
 	}); err != nil {
 		if errors.Is(err, basketrepo.ErrBasketIDDuplicate) {
-			return echo.ErrBadRequest
+			return echo.ErrBadRequest // may change here
 		}
+		fmt.Println("here, couldn't create basket in db.")
 		return echo.ErrInternalServerError
 	}
 
-	return c.JSONPretty(http.StatusCreated, id, "  ")
+	return c.JSONPretty(http.StatusCreated, basketID, "  ")
 }
 
 func (bh *BasketHandler) Update(c echo.Context) error {
@@ -82,9 +113,18 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	var req request.BasketUpdate // i have to consider this!! the data and state
+	var req request.BasketUpdate
 	if err = c.Bind(&req); err != nil {
 		return echo.ErrBadRequest
+	}
+
+	claims, err := auth.ValidateToken(req.Token)
+	if err != nil {
+		return err
+	}
+	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
+	if err != nil {
+		return echo.ErrInternalServerError
 	}
 
 	baskets, _ := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{
@@ -93,6 +133,7 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		UpdatedAt: nil,
 		Data:      nil,
 		State:     nil,
+		UserID:    &userID,
 	})
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
@@ -132,11 +173,12 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 		UpdatedAt: time.Now(),
 		Data:      toBeUpdatedData,
 		State:     toBeUpdatedState,
+		UserID:    userID,
 	}); err != nil {
 		return echo.ErrInternalServerError
 	}
 
-	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &basket.ID})
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &basket.ID, UserID: &userID})
 	basket = baskets[0]
 
 	resultMap := make(map[string]interface{})
@@ -151,7 +193,22 @@ func (bh *BasketHandler) GetByID(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	var req request.BasketGet
+
+	if err := c.Bind(&req); err != nil {
+		return echo.ErrBadRequest
+	}
+	claims, err := auth.ValidateToken(req.Token)
+	if err != nil {
+		return err
+	}
+
+	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64) // convert to string first
+	if err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id, UserID: &userID})
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
 	}
@@ -175,7 +232,22 @@ func (bh *BasketHandler) Delete(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	baskets, _ := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id})
+	var req request.BasketGet // may have to change here
+
+	if err := c.Bind(&req); err != nil {
+		return echo.ErrBadRequest
+	}
+	claims, err := auth.ValidateToken(req.Token)
+	if err != nil {
+		return err
+	}
+
+	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64) // convert to string first
+	if err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	baskets, _ := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{ID: &id, UserID: &userID})
 	if len(baskets) == 0 {
 		return echo.ErrNotFound
 	}
@@ -185,12 +257,12 @@ func (bh *BasketHandler) Delete(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	if err = bh.repo.Delete(c.Request().Context(), basketrepo.GetCommand{ID: &id}); err != nil {
+	if err = bh.repo.Delete(c.Request().Context(), basketrepo.GetCommand{ID: &id, UserID: &userID}); err != nil {
 		return echo.ErrInternalServerError
 	}
 
 	// get all baskets again
-	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{})
+	baskets, jsonbs := bh.repo.Get(c.Request().Context(), basketrepo.GetCommand{UserID: &userID})
 	resultMap := make(map[string]interface{})
 	resultMap["baskets"] = baskets
 	resultMap["jsonbs"] = jsonbs

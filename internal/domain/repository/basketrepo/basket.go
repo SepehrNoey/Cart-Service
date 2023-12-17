@@ -17,6 +17,7 @@ type GetCommand struct {
 	UpdatedAt *time.Time
 	Data      *string
 	State     *string
+	UserID    *uint64
 }
 
 type Repository interface {
