@@ -10,6 +10,8 @@ import (
 )
 
 var ErrBasketIDDuplicate = errors.New("given basket id already exists")
+var ErrCompletedBasketCantChange = errors.New("completed basket can't change")
+var ErrBasketDataInvalidLength = errors.New("invalid data length, at most 2048 bytes")
 
 type GetCommand struct {
 	ID        *uint64

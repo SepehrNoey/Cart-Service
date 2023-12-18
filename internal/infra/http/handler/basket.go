@@ -12,6 +12,7 @@ import (
 	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/basketrepo"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/http/auth"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/http/request"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -38,7 +39,10 @@ func (bh *BasketHandler) Get(c echo.Context) error {
 	}
 	claims, err := auth.ValidateToken(req.Token)
 	if err != nil {
-		return err
+		if errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenInvalidClaims) {
+			return echo.ErrUnauthorized
+		}
+		return echo.ErrInternalServerError
 	}
 
 	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
@@ -74,37 +78,36 @@ func (bh *BasketHandler) Create(c echo.Context) error {
 
 	claims, err := auth.ValidateToken(req.Token)
 	if err != nil {
-		return err
+		if errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenInvalidClaims) {
+			return echo.ErrUnauthorized
+		}
+		return echo.ErrInternalServerError
 	}
 	if err := req.CreateValidate(); err != nil {
-		return echo.ErrBadRequest // maybe return validation error
+		return err
 	}
 
 	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
 	if err != nil {
-		fmt.Println("in create here!")
 		return echo.ErrInternalServerError
 	}
 
 	// now, we create a new basket
 	basketID := rand.Uint64() % 1_000_000
 	now := time.Now()
-	if err := bh.repo.Create(c.Request().Context(), model.Basket{
+	basket := model.Basket{
 		ID:        basketID,
 		CreatedAt: now,
 		UpdatedAt: now,
 		Data:      req.Data,
 		State:     Pending,
 		UserID:    userID,
-	}); err != nil {
-		if errors.Is(err, basketrepo.ErrBasketIDDuplicate) {
-			return echo.ErrBadRequest // may change here
-		}
-		fmt.Println("here, couldn't create basket in db.")
+	}
+	if err := bh.repo.Create(c.Request().Context(), basket); err != nil {
 		return echo.ErrInternalServerError
 	}
 
-	return c.JSONPretty(http.StatusCreated, basketID, "  ")
+	return c.JSONPretty(http.StatusCreated, basket, "  ")
 }
 
 func (bh *BasketHandler) Update(c echo.Context) error {
@@ -120,8 +123,12 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 
 	claims, err := auth.ValidateToken(req.Token)
 	if err != nil {
-		return err
+		if errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenInvalidClaims) {
+			return echo.ErrUnauthorized
+		}
+		return echo.ErrInternalServerError
 	}
+
 	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
 	if err != nil {
 		return echo.ErrInternalServerError
@@ -148,7 +155,7 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 
 	// now, validation
 	if err = req.UpdateValidate(); err != nil {
-		return echo.ErrBadRequest // maybe return validation error
+		return err
 	}
 
 	var toBeUpdatedData string
@@ -164,6 +171,9 @@ func (bh *BasketHandler) Update(c echo.Context) error {
 	} else if req.State == Completed && basket.State == Pending {
 		toBeUpdatedState = req.State
 	} else {
+		if req.State == Pending && basket.State == Completed {
+			return basketrepo.ErrCompletedBasketCantChange
+		}
 		toBeUpdatedState = basket.State
 	}
 
@@ -200,7 +210,10 @@ func (bh *BasketHandler) GetByID(c echo.Context) error {
 	}
 	claims, err := auth.ValidateToken(req.Token)
 	if err != nil {
-		return err
+		if errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenInvalidClaims) {
+			return echo.ErrUnauthorized
+		}
+		return echo.ErrInternalServerError
 	}
 
 	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64) // convert to string first
@@ -232,17 +245,20 @@ func (bh *BasketHandler) Delete(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	var req request.BasketGet // may have to change here
+	var req request.BasketGet
 
 	if err := c.Bind(&req); err != nil {
 		return echo.ErrBadRequest
 	}
 	claims, err := auth.ValidateToken(req.Token)
 	if err != nil {
-		return err
+		if errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenInvalidClaims) {
+			return echo.ErrUnauthorized
+		}
+		return echo.ErrInternalServerError
 	}
 
-	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64) // convert to string first
+	userID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}

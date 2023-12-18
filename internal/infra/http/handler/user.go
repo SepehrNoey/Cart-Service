@@ -28,22 +28,24 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 
 	users := uh.repo.GetUsers(c.Request().Context(), userrepo.AuthCommand{Username: &req.Username})
 	if len(users) != 0 {
-		return userrepo.ErrUsernameDuplicate
+		return echo.NewHTTPError(http.StatusBadRequest, userrepo.ErrUsernameDuplicate.Error())
+
 	}
 
 	userID := rand.Uint64() % 1_000_000
 	now := time.Now()
-	if err := uh.repo.SignUp(c.Request().Context(), userrepo.AuthCommand{
+	cmd := userrepo.AuthCommand{
 		UserID:    &userID,
 		Username:  &req.Username,
 		Password:  &req.Password,
 		CreatedAt: &now,
 		UpdatedAt: &now,
-	}); err != nil {
+	}
+	if err := uh.repo.SignUp(c.Request().Context(), cmd); err != nil {
 		return err
 	}
 
-	return c.JSONPretty(http.StatusOK, req.Username, "  ")
+	return c.JSONPretty(http.StatusOK, cmd, "  ")
 
 }
 
@@ -53,19 +55,27 @@ func (uh *UserHandler) Login(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	users := uh.repo.GetUsers(c.Request().Context(), userrepo.AuthCommand{Username: &req.Username, Password: &req.Password})
+	users := uh.repo.GetUsers(c.Request().Context(), userrepo.AuthCommand{Username: &req.Username}) // find if the username exists or not
 	if len(users) == 0 {
 		return echo.ErrNotFound
 	}
 	if len(users) > 1 {
 		return echo.ErrInternalServerError
 	}
-	token, err := uh.repo.Login(c.Request().Context(), userrepo.AuthCommand{Username: &req.Username, Password: &req.Password})
+	token, err := uh.repo.Login(c.Request().Context(), userrepo.AuthCommand{
+		Username: &req.Username,
+		Password: &req.Password,
+		UserID:   &users[0].ID,
+	})
 	if err != nil {
 		return err
 	}
 
-	return c.JSONPretty(http.StatusOK, token, "  ")
+	result := make(map[string]string)
+	result["username"] = req.Username
+	result["token"] = token
+
+	return c.JSONPretty(http.StatusOK, result, "  ")
 }
 
 func (uh *UserHandler) Register(g *echo.Group) {

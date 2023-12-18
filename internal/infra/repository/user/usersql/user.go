@@ -3,6 +3,7 @@ package usersql
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/SepehrNoey/Cart-Service/internal/domain/model"
@@ -32,12 +33,7 @@ func New(db *gorm.DB) *Repository {
 
 func (r *Repository) SignUp(ctx context.Context, cmd userrepo.AuthCommand) error {
 	if cmd.Username == nil || cmd.Password == nil {
-		return userrepo.ErrInvalidCredentials
-	}
-
-	users := r.GetUsers(ctx, userrepo.AuthCommand{Username: cmd.Username})
-	if len(users) > 0 {
-		return userrepo.ErrUsernameDuplicate
+		return echo.NewHTTPError(http.StatusBadRequest, userrepo.ErrInvalidCredentials.Error())
 	}
 
 	now := time.Now()
@@ -45,8 +41,9 @@ func (r *Repository) SignUp(ctx context.Context, cmd userrepo.AuthCommand) error
 		CreatedAt: now, UpdatedAt: now}
 	if result := r.db.Model(&UserDTO{}).WithContext(ctx).Create(&dto); result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			return userrepo.ErrUserIDDuplicate
+			return echo.NewHTTPError(http.StatusInternalServerError, userrepo.ErrUserIDDuplicate.Error())
 		}
+		return echo.ErrInternalServerError
 	}
 	return nil
 
@@ -55,19 +52,15 @@ func (r *Repository) SignUp(ctx context.Context, cmd userrepo.AuthCommand) error
 // the AuthCommand must be set carefully before calling this function
 func (r *Repository) Login(ctx context.Context, cmd userrepo.AuthCommand) (string, error) {
 	if cmd.Username == nil || cmd.Password == nil {
-		return "", userrepo.ErrInvalidCredentials
+		return "", echo.NewHTTPError(http.StatusBadRequest, userrepo.ErrInvalidCredentials.Error())
 	}
 
 	users := r.GetUsers(ctx, cmd)
 	if len(users) == 0 {
-		return "", userrepo.ErrInvalidCredentials
-	}
-	if len(users) > 1 {
-		return "", echo.ErrInternalServerError
+		return "", echo.NewHTTPError(http.StatusBadRequest, userrepo.ErrInvalidCredentials.Error())
 	}
 
-	user := users[0]
-	token, err := auth.CreateToken(user.ID, user.Username)
+	token, err := auth.CreateToken(*cmd.UserID, *cmd.Username)
 	if err != nil {
 		return "", echo.ErrInternalServerError
 	}
@@ -108,7 +101,7 @@ func (r *Repository) GetUsers(ctx context.Context, cmd userrepo.AuthCommand) []m
 
 	if len(conditions) == 0 {
 		if err := r.db.WithContext(ctx).Find(&userDTOs); err.Error != nil {
-			return nil // maybe should change here to return and error
+			return nil
 		}
 	} else {
 		if err := r.db.WithContext(ctx).Where(&dto, conditions).Find(&userDTOs); err.Error != nil {

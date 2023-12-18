@@ -73,7 +73,6 @@ func (r *Repository) Get(ctx context.Context, cmd basketrepo.GetCommand) ([]mode
 		}
 	} else {
 		if err := r.db.WithContext(ctx).Where(&dto, conditions).Find(&basketDTOs); err.Error != nil {
-			// we may need to change here
 			return nil, nil
 		}
 	}

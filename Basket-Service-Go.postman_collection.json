@@ -1,0 +1,224 @@
+{
+	"info": {
+		"_postman_id": "9861e275-14b3-4c9d-9ccb-1cda2dd48e6c",
+		"name": "Basket-Service-Go",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30481623"
+	},
+	"item": [
+		{
+			"name": "signup",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"sahand\",\r\n    \"password\": \"0150188511\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/signup",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"sepehr\",\r\n    \"password\": \"0150188511\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetBaskets",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyX3NlcGVociIsImV4cCI6MTcwMjg1NTgzNywiaXNzIjoiYmFza2V0LXNlcnZpY2Uvand0LmdvIiwidXNlcl9pZCI6MzQzMTg4LCJ1c2VybmFtZSI6InNlcGVociJ9.v77vK8lIr2rhkMKV_PJauuIrVhdifwW-WRuQbCn-Tpo\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/basket/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"basket",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CreateBasket",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyX3NlcGVociIsImV4cCI6MTcwMjg1NTgzNywiaXNzIjoiYmFza2V0LXNlcnZpY2Uvand0LmdvIiwidXNlcl9pZCI6MzQzMTg4LCJ1c2VybmFtZSI6InNlcGVociJ9.v77vK8lIr2rhkMKV_PJauuIrVhdifwW-WRuQbCn-Tpo\",\r\n\"data\": \"first basket sepehr\"\r\n\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/basket/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"basket",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetBasket",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyX3NlcGVociIsImV4cCI6MTcwMjg1NTgzNywiaXNzIjoiYmFza2V0LXNlcnZpY2Uvand0LmdvIiwidXNlcl9pZCI6MzQzMTg4LCJ1c2VybmFtZSI6InNlcGVociJ9.v77vK8lIr2rhkMKV_PJauuIrVhdifwW-WRuQbCn-Tpo\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/basket/825352",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"basket",
+						"825352"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UpdateBasket",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyX3NlcGVociIsImV4cCI6MTcwMjg1NDYzMSwiaXNzIjoiYmFza2V0LXNlcnZpY2Uvand0LmdvIiwidXNlcl9pZCI6NjQ2NjkzLCJ1c2VybmFtZSI6InNlcGVociJ9.4zYCYllp78YoICTCsNyxLv6MIXjs3Z07EegAbYg9vrA\",\r\n    \"state\": \"COMPLETED\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/basket/383377",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"basket",
+						"383377"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DeleteBasket",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ1c2VyX3NlcGVociIsImV4cCI6MTcwMjg1NDYzMSwiaXNzIjoiYmFza2V0LXNlcnZpY2Uvand0LmdvIiwidXNlcl9pZCI6NjQ2NjkzLCJ1c2VybmFtZSI6InNlcGVociJ9.4zYCYllp78YoICTCsNyxLv6MIXjs3Z07EegAbYg9vrA\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:2023/basket/383377",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "2023",
+					"path": [
+						"basket",
+						"383377"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

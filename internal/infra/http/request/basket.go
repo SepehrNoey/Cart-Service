@@ -1,8 +1,7 @@
 package request
 
 import (
-	"fmt"
-
+	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/basketrepo"
 	"github.com/asaskevich/govalidator"
 )
 
@@ -13,7 +12,7 @@ type BasketCreate struct {
 
 func (bc BasketCreate) CreateValidate() error {
 	if _, err := govalidator.ValidateStruct(bc); err != nil {
-		return fmt.Errorf("create request validation failed %w", err)
+		return basketrepo.ErrBasketDataInvalidLength
 	}
 
 	return nil
@@ -28,12 +27,12 @@ type BasketUpdate struct {
 
 func (bu BasketUpdate) UpdateValidate() error {
 	if _, err := govalidator.ValidateStruct(bu); err != nil {
-		return fmt.Errorf("update request validation failed %w", err)
+		return basketrepo.ErrBasketDataInvalidLength
 	}
 
 	return nil
 }
 
 type BasketGet struct {
-	Token string `json:"token,omitempty"`
+	Token string `json:"token"`
 }

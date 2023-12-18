@@ -8,18 +8,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var secretKey = []byte("secret-key-of-basket-service-for-jwt-authentication")
+type jwtConfig struct {
+	secretKey          []byte
+	expirationDuration time.Duration
+}
+
+var config jwtConfig
+
+func SetJWTConfig(secretKey []byte, expDur time.Duration) {
+	config = jwtConfig{secretKey: secretKey, expirationDuration: expDur}
+}
 
 func CreateToken(userID uint64, username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
 		"user_id":  userID,
 		"iss":      "basket-service/jwt.go",
-		"exp":      time.Now().Add(time.Minute * 5).Unix(),
+		"exp":      time.Now().Add(config.expirationDuration).Unix(),
 		"aud":      "user_" + username,
 	})
 
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString(config.secretKey)
 	if err != nil {
 		return "", err
 	}
@@ -29,7 +38,7 @@ func CreateToken(userID uint64, username string) (string, error) {
 
 func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return config.secretKey, nil
 	})
 
 	if err != nil {

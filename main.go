@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/basketrepo"
 	"github.com/SepehrNoey/Cart-Service/internal/domain/repository/userrepo"
+	"github.com/SepehrNoey/Cart-Service/internal/infra/http/auth"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/http/handler"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/repository/basket/basketsql"
 	"github.com/SepehrNoey/Cart-Service/internal/infra/repository/user/usersql"
@@ -33,6 +35,10 @@ func main() {
 	bh.Register(app.Group("basket/"))
 	uh := handler.NewUserHandler(userRepo)
 	uh.Register(app.Group("/"))
+
+	secretKey := []byte("secret-key-of-basket-service-for-jwt-authentication")
+	expDur := time.Minute * 5
+	auth.SetJWTConfig(secretKey, expDur)
 
 	if err := app.Start("0.0.0.0:2023"); err != nil {
 		log.Fatalf("server failed to start %v", err)
